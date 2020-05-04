@@ -1,0 +1,8 @@
+{
+  "name": "Ionic-UploadApp",
+  "integrations": {
+    "capacitor": {},
+    "cordova": {}
+  },
+  "type": "angular"
+}
