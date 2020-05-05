@@ -10,6 +10,7 @@ import { File, FileEntry } from '@ionic-native/File/ngx';
 import { Media, MediaObject } from '@ionic-native/media/ngx';
 import { StreamingMedia } from '@ionic-native/streaming-media/ngx';
 import { PhotoViewer } from '@ionic-native/photo-viewer/ngx';
+import { Camera, CameraOptions } from '@ionic-native/camera/ngx';
 
 const MEDIA_FOLDER_NAME = 'my_media';
 
@@ -30,14 +31,15 @@ export class UploadPage implements OnInit {
     private streamingMedia: StreamingMedia,
     private photoViewer: PhotoViewer,
     private actionSheetController: ActionSheetController,
-    private plt: Platform
+    private plt: Platform,
+    private camera: Camera,
   ) {
     this.files = [];
   }
 
   ngOnInit() {
     this.plt.ready().then(() => {
-      let path = this.file.dataDirectory;
+      const path = this.file.dataDirectory;
       this.file.checkDir(path, MEDIA_FOLDER_NAME).then(
         () => {
           this.loadFiles();
@@ -75,9 +77,15 @@ export class UploadPage implements OnInit {
           }
         },
         {
-          text: 'Upload Media',
+          text: 'Upload Images',
           handler: () => {
-            this.pickImages();
+            this.selectMultiple();
+          }
+        },
+        {
+          text: 'Upload Video',
+          handler: () => {
+            this.pickVideo();
           }
         },
         {
@@ -89,19 +97,33 @@ export class UploadPage implements OnInit {
     await actionSheet.present();
   }
 
-  pickImages() {
+  pickVideo() {
     // If you get problems on Android, try to ask for Permission first
-    this.imagePicker.requestReadPermission().then(result => {
-      console.log('requestReadPermission: ' + result);
-      this.selectMultiple();
+    // this.imagePicker.requestReadPermission().then(result => {
+    //   console.log('requestReadPermission: ' + result);
+    //   this.selectMultiple();
+    // });
+
+    const options: CameraOptions = {
+      quality: 100,
+      sourceType: this.camera.PictureSourceType.PHOTOLIBRARY,
+      destinationType: this.camera.DestinationType.FILE_URI,
+      mediaType: this.camera.MediaType.VIDEO
+    };
+
+    this.camera.getPicture(options).then((imageData) => {
+      const path = `file://${imageData}`;
+      this.copyFileToLocalDir(path);
+    }, (err) => {
+      // Handle error
     });
   }
 
   selectMultiple() {
-    this.imagePicker.getPictures({allow_video: true}).then(
+    this.imagePicker.getPictures({ allow_video: true }).then(
       results => {
-        for (var i = 0; i < results.length; i++) {
-          this.copyFileToLocalDir(results[i]);
+        for (const result of results) {
+          this.copyFileToLocalDir(result);
         }
       }
     );
@@ -160,7 +182,7 @@ export class UploadPage implements OnInit {
       this.streamingMedia.playVideo(f.nativeURL);
     } else if (f.name.indexOf('.jpg') > -1 || f.name.indexOf('.jpeg') > -1) {
       // E.g: Use the Photoviewer to present an Image
-      this.photoViewer.show(f.nativeURL, 'MY awesome image');
+      this.photoViewer.show(f.nativeURL);
     }
   }
 
