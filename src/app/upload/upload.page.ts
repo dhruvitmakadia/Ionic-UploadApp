@@ -75,13 +75,7 @@ export class UploadPage implements OnInit {
           }
         },
         {
-          text: 'Record Audio',
-          handler: () => {
-            this.recordAudio();
-          }
-        },
-        {
-          text: 'Load multiple',
+          text: 'Upload Media',
           handler: () => {
             this.pickImages();
           }
@@ -104,7 +98,7 @@ export class UploadPage implements OnInit {
   }
 
   selectMultiple() {
-    this.imagePicker.getPictures({}).then(
+    this.imagePicker.getPictures({allow_video: true}).then(
       results => {
         for (var i = 0; i < results.length; i++) {
           this.copyFileToLocalDir(results[i]);
@@ -115,17 +109,6 @@ export class UploadPage implements OnInit {
 
   captureImage() {
     this.mediaCapture.captureImage().then(
-      (data: MediaFile[]) => {
-        if (data.length > 0) {
-          this.copyFileToLocalDir(data[0].fullPath);
-        }
-      },
-      (err: CaptureError) => alert(JSON.stringify(err))
-    );
-  }
-
-  recordAudio() {
-    this.mediaCapture.captureAudio().then(
       (data: MediaFile[]) => {
         if (data.length > 0) {
           this.copyFileToLocalDir(data[0].fullPath);
@@ -172,15 +155,10 @@ export class UploadPage implements OnInit {
   }
 
   openFile(f: FileEntry) {
-    if (f.name.indexOf('.wav') > -1) {
-      // We need to remove file:/// from the path for the audio plugin to work
-      const path = f.nativeURL.replace(/^file:\/\//, '');
-      const audioFile: MediaObject = this.media.create(path);
-      audioFile.play();
-    } else if (f.name.indexOf('.MOV') > -1 || f.name.indexOf('.mp4') > -1) {
+    if (f.name.indexOf('.MOV') > -1 || f.name.indexOf('.mp4') > -1) {
       // E.g: Use the Streaming Media plugin to play a video
       this.streamingMedia.playVideo(f.nativeURL);
-    } else if (f.name.indexOf('.jpg') > -1) {
+    } else if (f.name.indexOf('.jpg') > -1 || f.name.indexOf('.jpeg') > -1) {
       // E.g: Use the Photoviewer to present an Image
       this.photoViewer.show(f.nativeURL, 'MY awesome image');
     }
