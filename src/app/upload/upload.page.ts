@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ImagePicker } from '@ionic-native/image-picker/ngx';
-import { ActionSheetController, Platform } from '@ionic/angular';
+import { ActionSheetController, Platform, LoadingController } from '@ionic/angular';
 import {
   MediaCapture,
   MediaFile,
@@ -22,6 +22,8 @@ const MEDIA_FOLDER_NAME = 'my_media';
 export class UploadPage implements OnInit {
 
   public files: any[];
+  public loader: any;
+  public imageflag: boolean;
 
   constructor(
     private imagePicker: ImagePicker,
@@ -33,8 +35,10 @@ export class UploadPage implements OnInit {
     private actionSheetController: ActionSheetController,
     private plt: Platform,
     private camera: Camera,
+    private loadingController: LoadingController
   ) {
     this.files = [];
+    this.imageflag = false;
   }
 
   ngOnInit() {
@@ -120,6 +124,7 @@ export class UploadPage implements OnInit {
   }
 
   selectMultiple() {
+    this.imageflag = true;
     this.imagePicker.getPictures({ allow_video: true }).then(
       results => {
         for (const result of results) {
@@ -136,7 +141,7 @@ export class UploadPage implements OnInit {
           this.copyFileToLocalDir(data[0].fullPath);
         }
       },
-      (err: CaptureError) => alert(JSON.stringify(err))
+      (err: CaptureError) => console.log(JSON.stringify(err))
     );
   }
 
@@ -147,7 +152,7 @@ export class UploadPage implements OnInit {
           this.copyFileToLocalDir(data[0].fullPath);
         }
       },
-      (err: CaptureError) => alert(JSON.stringify(err))
+      (err: CaptureError) => console.log(JSON.stringify(err))
     );
   }
 
@@ -166,12 +171,18 @@ export class UploadPage implements OnInit {
     const copyFrom = myPath.substr(0, myPath.lastIndexOf('/') + 1);
     const copyTo = this.file.dataDirectory + MEDIA_FOLDER_NAME;
 
+    if (!this.imageflag) {
+      this.showLoader();
+    }
     this.file.copyFile(copyFrom, name, copyTo, newName).then(
       success => {
         this.loadFiles();
+        this.imageflag = false;
+        this.hideLoader();
       },
       error => {
         console.log('error: ', error);
+        this.hideLoader();
       }
     );
   }
@@ -191,5 +202,16 @@ export class UploadPage implements OnInit {
     this.file.removeFile(path, f.name).then(() => {
       this.loadFiles();
     }, err => console.log('error remove: ', err));
+  }
+
+  async showLoader() {
+    this.loader = await this.loadingController.create({
+      message: 'Please wait your file is uploding...'
+    });
+    await this.loader.present();
+  }
+
+  hideLoader() {
+    this.loader.dismiss();
   }
 }
