@@ -14,8 +14,11 @@ import { Camera, CameraOptions } from '@ionic-native/camera/ngx';
 import { FileTransfer, FileUploadOptions, FileTransferObject } from '@ionic-native/file-transfer/ngx';
 
 const MEDIA_FOLDER_NAME = 'my_media';
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const ALLOWED_MIME_TYPE = 'video/mp4';
+const MAX_IMG_SIZE = 5 * 1024 * 1024;
+const MAX_VIDEO_SIZE = 100 * 1024 * 1024;
+const ALLOWED_IMG1_TYPE = 'image/jpeg';
+const ALLOWED_IMG2_TYPE = 'image/jpg';
+const ALLOWED_VIDEO_TYPE = 'video/mp4';
 
 @Component({
   selector: 'app-upload',
@@ -124,26 +127,7 @@ export class UploadPage implements OnInit {
     };
     this.camera.getPicture(options).then(async (videoUrl) => {
       const path = `file://${videoUrl}`;
-      let retrievedFile;
-      const filename = videoUrl.substr(videoUrl.lastIndexOf('/') + 1);
-      let dirpath = videoUrl.substr(0, videoUrl.lastIndexOf('/') + 1);
-      dirpath = dirpath.includes('file://') ? dirpath : 'file://' + dirpath;
-      try {
-        const dirUrl = await this.file.resolveDirectoryUrl(dirpath);
-        retrievedFile = await this.file.getFile(dirUrl, filename, {});
-      } catch (err) {
-        this.presentAlert('Error', 'Something went wrong.');
-      }
-      retrievedFile.file(data => {
-        if (data.size > MAX_FILE_SIZE) {
-          this.presentAlert('Error', 'You cannot upload more than 5mb.');
-        } else {
-          this.copyFileToLocalDir(path);
-        }
-        if (data.type !== ALLOWED_MIME_TYPE) {
-          this.presentAlert('Error', 'Incorrect file type.');
-        }
-      });
+      this.copyFileToLocalDir(path, 'video');
     }, (err) => {
       // Handle error
     });
@@ -154,7 +138,7 @@ export class UploadPage implements OnInit {
     this.imagePicker.getPictures({ allow_video: true }).then(
       results => {
         for (const result of results) {
-          this.copyFileToLocalDir(result);
+          this.copyFileToLocalDir(result, 'img');
         }
       }
     );
@@ -164,7 +148,7 @@ export class UploadPage implements OnInit {
     this.mediaCapture.captureImage().then(
       (data: MediaFile[]) => {
         if (data.length > 0) {
-          this.copyFileToLocalDir(data[0].fullPath);
+          this.copyFileToLocalDir(data[0].fullPath, 'img');
         }
       },
       (err: CaptureError) => console.log(JSON.stringify(err))
@@ -178,29 +162,69 @@ export class UploadPage implements OnInit {
         //   alert('Error You cannot upload more than 5mb.');
         // }
         if (data.length > 0) {
-          this.copyFileToLocalDir(data[0].fullPath);
+          this.copyFileToLocalDir(data[0].fullPath, 'video');
         }
       },
       (err: CaptureError) => console.log(JSON.stringify(err))
     );
   }
 
-  copyFileToLocalDir(fullPath) {
-    let myPath = fullPath;
-    // Make sure we copy from the right location
-    if (fullPath.indexOf('file://') < 0) {
-      myPath = 'file://' + fullPath;
+  async checkSize(videoUrl, mediaType) {
+    let retrievedFile;
+    const filename = videoUrl.substr(videoUrl.lastIndexOf('/') + 1);
+    let dirpath = videoUrl.substr(0, videoUrl.lastIndexOf('/') + 1);
+    dirpath = dirpath.includes('file://') ? dirpath : 'file://' + dirpath;
+    try {
+      const dirUrl = await this.file.resolveDirectoryUrl(dirpath);
+      retrievedFile = await this.file.getFile(dirUrl, filename, {});
+    } catch (err) {
+      this.presentAlert('Error', 'Something went wrong.');
     }
+    // if (mediaType === 'img') {
+    retrievedFile.file(data => {
+      // alert(data.type);
+      if (data.size > MAX_IMG_SIZE) {
+        this.presentAlert('Error', 'You cannot upload more than 5mb.');
+        return false;
+      }
+      if (data.type !== ALLOWED_IMG1_TYPE || data.type !== ALLOWED_IMG2_TYPE) {
+        this.presentAlert('Error', 'Incorrect image type.');
+        return false;
+      }
+      return true;
+    });
+    // } else if (mediaType === 'video') {
+    //   retrievedFile.file(data => {
+    //     if (data.size > MAX_VIDEO_SIZE) {
+    //       this.presentAlert('Error', 'You cannot upload more than 5mb.');
+    //       return false;
+    //     }
+    //     if (data.type !== ALLOWED_VIDEO_TYPE) {
+    //       this.presentAlert('Error', 'Incorrect video type.');
+    //       return false;
+    //     }
+    //     return true;
+    //   });
+    // }
+  }
 
-    const ext = myPath.split('.').pop();
-    const d = Date.now();
-    const newName = `${d}.${ext}`;
+  copyFileToLocalDir(fullPath, mediaType) {
+    let myPath = fullPath;
+    const sizeflag = this.checkSize(myPath, mediaType);
+    if (sizeflag) {
+      // Make sure we copy from the right location
+      if (fullPath.indexOf('file://') < 0) {
+        myPath = 'file://' + fullPath;
+      }
 
-    const name = myPath.substr(myPath.lastIndexOf('/') + 1);
-    const copyFrom = myPath.substr(0, myPath.lastIndexOf('/') + 1);
-    const copyTo = this.file.dataDirectory + MEDIA_FOLDER_NAME;
+      const ext = myPath.split('.').pop();
+      const d = Date.now();
+      const newName = `${d}.${ext}`;
 
-    if (ext === 'jpg' || ext === 'jpeg' || ext === 'mp4') {
+      const name = myPath.substr(myPath.lastIndexOf('/') + 1);
+      const copyFrom = myPath.substr(0, myPath.lastIndexOf('/') + 1);
+      const copyTo = this.file.dataDirectory + MEDIA_FOLDER_NAME;
+
       if (!this.imageflag) {
         this.showLoader();
       }
@@ -216,8 +240,6 @@ export class UploadPage implements OnInit {
         }
       );
       this.hideLoader();
-    } else {
-      this.presentToast(ext);
     }
   }
 
