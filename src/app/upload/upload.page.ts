@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ImagePicker } from '@ionic-native/image-picker/ngx';
-import { ActionSheetController, Platform, LoadingController } from '@ionic/angular';
+import { ActionSheetController, Platform, LoadingController, ToastController } from '@ionic/angular';
 import {
   MediaCapture,
   MediaFile,
@@ -35,7 +35,8 @@ export class UploadPage implements OnInit {
     private actionSheetController: ActionSheetController,
     private plt: Platform,
     private camera: Camera,
-    private loadingController: LoadingController
+    private loadingController: LoadingController,
+    private toastController: ToastController
   ) {
     this.files = [];
     this.imageflag = false;
@@ -171,20 +172,24 @@ export class UploadPage implements OnInit {
     const copyFrom = myPath.substr(0, myPath.lastIndexOf('/') + 1);
     const copyTo = this.file.dataDirectory + MEDIA_FOLDER_NAME;
 
-    if (!this.imageflag) {
-      this.showLoader();
-    }
-    this.file.copyFile(copyFrom, name, copyTo, newName).then(
-      success => {
-        this.loadFiles();
-        this.imageflag = false;
-        this.hideLoader();
-      },
-      error => {
-        console.log('error: ', error);
-        this.hideLoader();
+    if (ext === 'jpg' || ext === 'jpeg' || ext === 'mp4') {
+      if (!this.imageflag) {
+        this.showLoader();
       }
-    );
+      this.file.copyFile(copyFrom, name, copyTo, newName).then(
+        success => {
+          this.loadFiles();
+          this.imageflag = false;
+          this.hideLoader();
+        },
+        error => {
+          console.log('error: ', error);
+          this.hideLoader();
+        }
+      );
+    } else {
+      this.presentToast(ext);
+    }
   }
 
   openFile(f: FileEntry) {
@@ -213,5 +218,13 @@ export class UploadPage implements OnInit {
 
   hideLoader() {
     this.loader.dismiss();
+  }
+
+  async presentToast(ext: string) {
+    const toast = await this.toastController.create({
+      message: `${ext} File Format Not Supported.`,
+      duration: 3000
+    });
+    toast.present();
   }
 }
