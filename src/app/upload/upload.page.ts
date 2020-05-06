@@ -11,8 +11,11 @@ import { Media, MediaObject } from '@ionic-native/media/ngx';
 import { StreamingMedia } from '@ionic-native/streaming-media/ngx';
 import { PhotoViewer } from '@ionic-native/photo-viewer/ngx';
 import { Camera, CameraOptions } from '@ionic-native/camera/ngx';
+import { FileTransfer, FileUploadOptions, FileTransferObject } from '@ionic-native/file-transfer/ngx';
 
 const MEDIA_FOLDER_NAME = 'my_media';
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_MIME_TYPE = 'video/mp4';
 
 @Component({
   selector: 'app-upload',
@@ -24,6 +27,9 @@ export class UploadPage implements OnInit {
   public files: any[];
   public loader: any;
   public imageflag: boolean;
+  isUploading: boolean = false;
+  uploadPercent: number = 0;
+  videoFileUpload: FileTransferObject;
 
   constructor(
     private imagePicker: ImagePicker,
@@ -35,7 +41,8 @@ export class UploadPage implements OnInit {
     private actionSheetController: ActionSheetController,
     private plt: Platform,
     private camera: Camera,
-    private loadingController: LoadingController
+    private loadingController: LoadingController,
+    private transfer: FileTransfer,
   ) {
     this.files = [];
     this.imageflag = false;
@@ -98,7 +105,7 @@ export class UploadPage implements OnInit {
         }
       ]
     });
-    await actionSheet.present();
+    await actionSheet.present(); 
   }
 
   pickVideo() {
@@ -115,9 +122,34 @@ export class UploadPage implements OnInit {
       mediaType: this.camera.MediaType.VIDEO
     };
 
-    this.camera.getPicture(options).then((imageData) => {
-      const path = `file://${imageData}`;
-      this.copyFileToLocalDir(path);
+    this.camera.getPicture(options).then(async (videoUrl) => {
+      const path = `file://${videoUrl}`;
+      let retrievedFile;
+      const filename = videoUrl.substr(videoUrl.lastIndexOf('/') + 1);
+      let dirpath = videoUrl.substr(0, videoUrl.lastIndexOf('/') + 1);
+      dirpath = dirpath.includes('file://') ? dirpath : 'file://' + dirpath;
+
+      try {
+        const dirUrl = await this.file.resolveDirectoryUrl(dirpath);
+        retrievedFile = await this.file.getFile(dirUrl, filename, {});
+
+      } catch (err) {
+        alert('Error Something went wrong.');
+        this.hideLoader();
+      }
+      retrievedFile.file(data => {
+        if (data.size > MAX_FILE_SIZE) {
+          alert('Error You cannot upload more than 5mb.');
+          // this.hideLoader();
+        } else {
+          this.copyFileToLocalDir(path);
+          this.hideLoader();
+          alert('aaa');
+        }
+        if (data.type !== ALLOWED_MIME_TYPE) {
+          alert('Error Incorrect file type.');
+        }
+      });
     }, (err) => {
       // Handle error
     });
@@ -148,6 +180,9 @@ export class UploadPage implements OnInit {
   recordVideo() {
     this.mediaCapture.captureVideo().then(
       (data: MediaFile[]) => {
+        // if (data.size > MAX_FILE_SIZE) {
+        //   alert('Error You cannot upload more than 5mb.');
+        // }
         if (data.length > 0) {
           this.copyFileToLocalDir(data[0].fullPath);
         }

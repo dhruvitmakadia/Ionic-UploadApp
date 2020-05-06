@@ -8,6 +8,8 @@ import { UploadPageRoutingModule } from './upload-routing.module';
 
 import { UploadPage } from './upload.page';
 
+import { FileTransfer } from '@ionic-native/file-transfer/ngx';
+
 @NgModule({
   imports: [
     CommonModule,
@@ -15,6 +17,9 @@ import { UploadPage } from './upload.page';
     IonicModule,
     UploadPageRoutingModule
   ],
-  declarations: [UploadPage]
+  declarations: [UploadPage],
+  providers: [
+    FileTransfer,
+  ]
 })
 export class UploadPageModule {}
