@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ImagePicker } from '@ionic-native/image-picker/ngx';
-import { ActionSheetController, Platform, LoadingController } from '@ionic/angular';
+import { ActionSheetController, Platform, LoadingController, ToastController, AlertController } from '@ionic/angular';
 import {
   MediaCapture,
   MediaFile,
@@ -14,7 +14,7 @@ import { Camera, CameraOptions } from '@ionic-native/camera/ngx';
 import { FileTransfer, FileUploadOptions, FileTransferObject } from '@ionic-native/file-transfer/ngx';
 
 const MEDIA_FOLDER_NAME = 'my_media';
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ALLOWED_MIME_TYPE = 'video/mp4';
 
 @Component({
@@ -42,7 +42,8 @@ export class UploadPage implements OnInit {
     private plt: Platform,
     private camera: Camera,
     private loadingController: LoadingController,
-    private transfer: FileTransfer,
+    private toastController: ToastController,
+    public alertController: AlertController
   ) {
     this.files = [];
     this.imageflag = false;
@@ -105,7 +106,7 @@ export class UploadPage implements OnInit {
         }
       ]
     });
-    await actionSheet.present(); 
+    await actionSheet.present();
   }
 
   pickVideo() {
@@ -121,33 +122,26 @@ export class UploadPage implements OnInit {
       destinationType: this.camera.DestinationType.FILE_URI,
       mediaType: this.camera.MediaType.VIDEO
     };
-
     this.camera.getPicture(options).then(async (videoUrl) => {
       const path = `file://${videoUrl}`;
       let retrievedFile;
       const filename = videoUrl.substr(videoUrl.lastIndexOf('/') + 1);
       let dirpath = videoUrl.substr(0, videoUrl.lastIndexOf('/') + 1);
       dirpath = dirpath.includes('file://') ? dirpath : 'file://' + dirpath;
-
       try {
         const dirUrl = await this.file.resolveDirectoryUrl(dirpath);
         retrievedFile = await this.file.getFile(dirUrl, filename, {});
-
       } catch (err) {
-        alert('Error Something went wrong.');
-        this.hideLoader();
+        this.presentAlert('Error', 'Something went wrong.');
       }
       retrievedFile.file(data => {
         if (data.size > MAX_FILE_SIZE) {
-          alert('Error You cannot upload more than 5mb.');
-          // this.hideLoader();
+          this.presentAlert('Error', 'You cannot upload more than 5mb.');
         } else {
           this.copyFileToLocalDir(path);
-          this.hideLoader();
-          alert('aaa');
         }
         if (data.type !== ALLOWED_MIME_TYPE) {
-          alert('Error Incorrect file type.');
+          this.presentAlert('Error', 'Incorrect file type.');
         }
       });
     }, (err) => {
@@ -206,20 +200,25 @@ export class UploadPage implements OnInit {
     const copyFrom = myPath.substr(0, myPath.lastIndexOf('/') + 1);
     const copyTo = this.file.dataDirectory + MEDIA_FOLDER_NAME;
 
-    if (!this.imageflag) {
-      this.showLoader();
-    }
-    this.file.copyFile(copyFrom, name, copyTo, newName).then(
-      success => {
-        this.loadFiles();
-        this.imageflag = false;
-        this.hideLoader();
-      },
-      error => {
-        console.log('error: ', error);
-        this.hideLoader();
+    if (ext === 'jpg' || ext === 'jpeg' || ext === 'mp4') {
+      if (!this.imageflag) {
+        this.showLoader();
       }
-    );
+      this.file.copyFile(copyFrom, name, copyTo, newName).then(
+        success => {
+          this.loadFiles();
+          this.imageflag = false;
+          this.hideLoader();
+        },
+        error => {
+          console.log('error: ', error);
+          this.hideLoader();
+        }
+      );
+      this.hideLoader();
+    } else {
+      this.presentToast(ext);
+    }
   }
 
   openFile(f: FileEntry) {
@@ -248,5 +247,44 @@ export class UploadPage implements OnInit {
 
   hideLoader() {
     this.loader.dismiss();
+  }
+
+  async presentToast(ext: string) {
+    const toast = await this.toastController.create({
+      message: `${ext} File Format Not Supported.`,
+      duration: 3000
+    });
+    toast.present();
+  }
+  async presentAlert(title, message1) {
+    const alert = await this.alertController.create({
+      subHeader: title,
+      message: message1,
+      buttons: ['OK']
+    });
+    await alert.present();
+  }
+
+  async presentConfirm() {
+    const alert = await this.alertController.create({
+      subHeader: 'Confirm purchase',
+      message: 'Do you want to buy this book?',
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel',
+          handler: () => {
+            console.log('Cancel clicked');
+          }
+        },
+        {
+          text: 'Buy',
+          handler: () => {
+            console.log('Buy clicked');
+          }
+        }
+      ]
+    });
+    alert.present();
   }
 }
