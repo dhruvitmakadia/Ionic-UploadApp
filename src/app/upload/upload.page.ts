@@ -7,12 +7,12 @@ import {
   CaptureError
 } from '@ionic-native/media-capture/ngx';
 import { File, FileEntry } from '@ionic-native/File/ngx';
-import { Media, MediaObject } from '@ionic-native/media/ngx';
+import { Media } from '@ionic-native/media/ngx';
 import { StreamingMedia } from '@ionic-native/streaming-media/ngx';
 import { PhotoViewer } from '@ionic-native/photo-viewer/ngx';
 import { Camera, CameraOptions } from '@ionic-native/camera/ngx';
-import { FileTransfer, FileUploadOptions, FileTransferObject } from '@ionic-native/file-transfer/ngx';
-import { element } from 'protractor';
+import { FileTransferObject } from '@ionic-native/file-transfer/ngx';
+import { WebView } from '@ionic-native/ionic-webview/ngx';
 
 const MEDIA_FOLDER_NAME = 'my_media';
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
@@ -47,6 +47,7 @@ export class UploadPage implements OnInit {
     private camera: Camera,
     private loadingController: LoadingController,
     private toastController: ToastController,
+    public webview: WebView,
     public alertController: AlertController
   ) {
     this.files = [];

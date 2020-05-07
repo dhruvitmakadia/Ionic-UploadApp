@@ -25,6 +25,7 @@
     "@ionic-native/file": "^5.24.0",
     "@ionic-native/file-transfer": "^5.25.0",
     "@ionic-native/image-picker": "^5.24.0",
+    "@ionic-native/ionic-webview": "^5.25.0",
     "@ionic-native/media": "^5.24.0",
     "@ionic-native/media-capture": "^5.24.0",
     "@ionic-native/photo-viewer": "^5.24.0",
@@ -91,9 +92,7 @@
       "cordova-plugin-statusbar": {},
       "cordova-plugin-device": {},
       "cordova-plugin-splashscreen": {},
-      "cordova-plugin-ionic-webview": {
-        "ANDROID_SUPPORT_ANNOTATIONS_VERSION": "27.+"
-      },
+      "cordova-plugin-ionic-webview": {},
       "cordova-plugin-ionic-keyboard": {},
       "cordova-plugin-camera": {
         "ANDROID_SUPPORT_V4_VERSION": "27.+"

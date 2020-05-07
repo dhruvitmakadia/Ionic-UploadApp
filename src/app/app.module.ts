@@ -15,7 +15,7 @@ import { Media } from '@ionic-native/media/ngx';
 import { StreamingMedia } from '@ionic-native/streaming-media/ngx';
 import { PhotoViewer } from '@ionic-native/photo-viewer/ngx';
 import { Camera } from '@ionic-native/camera/ngx';
-
+import { WebView } from '@ionic-native/ionic-webview/ngx';
 
 @NgModule({
   declarations: [AppComponent],
@@ -31,7 +31,8 @@ import { Camera } from '@ionic-native/camera/ngx';
     Media,
     StreamingMedia,
     PhotoViewer,
-    Camera
+    Camera,
+    WebView
   ],
   bootstrap: [AppComponent]
 })
