@@ -114,6 +114,35 @@ export class UploadPage implements OnInit {
     await actionSheet.present();
   }
 
+  async showActionSheet(file) {
+    const actionSheet = await this.actionSheetController.create({
+      header: 'Photos',
+      buttons: [{
+        text: 'View',
+        icon: 'eye',
+        handler: () => {
+          this.openFile(file);
+        }
+      },
+      {
+        text: 'Delete',
+        role: 'destructive',
+        icon: 'trash',
+        handler: () => {
+          this.deleteFile(file);
+        }
+      }, {
+        text: 'Cancel',
+        icon: 'close',
+        role: 'cancel',
+        handler: () => {
+          // Nothing to do, action sheet is automatically closed
+        }
+      }]
+    });
+    await actionSheet.present();
+  }
+
   pickVideo() {
     // If you get problems on Android, try to ask for Permission first
     // this.imagePicker.requestReadPermission().then(result => {
